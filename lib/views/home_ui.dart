@@ -32,7 +32,7 @@ class _HomeUIState extends State<HomeUI> {
       appBar: AppBar(
         backgroundColor: Colors.deepOrange,
         title: Text(
-          'SAU Buffet',
+          'Tech SAU Buffet',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
