@@ -360,6 +360,10 @@ class _CalBillUIState extends State<CalBillUI> {
                                 builder: (context) => ShowBillUI(
                                   payTotal: payTotal,
                                   imgFile: imgFile,
+                                  adult: adult,
+                                  child: child,
+                                  coke: coke,
+                                  pure: pure,
                                 ),
                               ),
                             );
