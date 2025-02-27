@@ -1,0 +1,2 @@
+C:/CMobile/sau_mukratha_app/android/app/.cxx/Debug/1e45u2n5/x86/CMakeFiles/edit_cache.dir
+C:/CMobile/sau_mukratha_app/android/app/.cxx/Debug/1e45u2n5/x86/CMakeFiles/rebuild_cache.dir

@@ -18,16 +18,13 @@ class _CalBillUIState extends State<CalBillUI> {
   bool childCheck = false;
 
   // สร้างแปรเพื่อใช้กับบุฟเฟต์น้ำดื่ม
-  int waterCheck = 1;
+  int drinkCheck = 1;
 
   // ตัวควบคุม Textfield
   TextEditingController adultCtrl = TextEditingController(text: '0');
   TextEditingController childCtrl = TextEditingController(text: '0');
   TextEditingController cokeCtrl = TextEditingController(text: '0');
   TextEditingController pureCtrl = TextEditingController(text: '0');
-
-  // สร้าง method เปิดกล้องเพื่อถ่ายรูป
-  File? imgFile;
 
   // สร้างตัวแปรเก็บประเภทสมาชิก
   List<String> memberType = [
@@ -37,7 +34,11 @@ class _CalBillUIState extends State<CalBillUI> {
   ];
 
   // สร้างตัวแปรเก็บส่วนลดประเภทสมาชิก
-  double discount = 0;
+  double discount = 0.0;
+  double selectDiscount = 0.0;
+
+  // สร้าง method เปิดกล้องเพื่อถ่ายรูป
+  File? imgFile;
 
   Future<void> openCamera() async {
     final picker = await ImagePicker().pickImage(
@@ -49,6 +50,26 @@ class _CalBillUIState extends State<CalBillUI> {
     setState(() {
       imgFile = File(picker.path);
     });
+  }
+
+  showWarningDialog(context, message) async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'คำเตือน',
+        ),
+        content: Text(message),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text('ตกลง'),
+          )
+        ],
+      ),
+    );
   }
 
   @override
@@ -167,15 +188,15 @@ class _CalBillUIState extends State<CalBillUI> {
                     Radio(
                       onChanged: (valueParam) {
                         setState(() {
-                          waterCheck = valueParam!;
-                          if (waterCheck == 1) {
+                          drinkCheck = valueParam!;
+                          if (drinkCheck == 1) {
                             cokeCtrl.text = '0';
                             pureCtrl.text = '0';
                           }
                         });
                       },
                       value: 1,
-                      groupValue: waterCheck,
+                      groupValue: drinkCheck,
                     ),
                     Text('รับ 25 บาท/หัว')
                   ],
@@ -185,11 +206,11 @@ class _CalBillUIState extends State<CalBillUI> {
                     Radio(
                       onChanged: (valueParam) {
                         setState(() {
-                          waterCheck = valueParam!;
+                          drinkCheck = valueParam!;
                         });
                       },
                       value: 2,
-                      groupValue: waterCheck,
+                      groupValue: drinkCheck,
                     ),
                     Text('ไม่รับ')
                   ],
@@ -204,7 +225,7 @@ class _CalBillUIState extends State<CalBillUI> {
                     ),
                     Flexible(
                       child: TextField(
-                        enabled: waterCheck == 1 ? false : true,
+                        enabled: drinkCheck == 1 ? false : true,
                         controller: cokeCtrl,
                         keyboardType: TextInputType.number,
                         inputFormatters: [
@@ -226,7 +247,7 @@ class _CalBillUIState extends State<CalBillUI> {
                     ),
                     Flexible(
                       child: TextField(
-                        enabled: waterCheck == 1 ? false : true,
+                        enabled: drinkCheck == 1 ? false : true,
                         controller: pureCtrl,
                         keyboardType: TextInputType.number,
                         inputFormatters: [
@@ -251,11 +272,11 @@ class _CalBillUIState extends State<CalBillUI> {
                 SizedBox(height: 10),
                 // DropDown ประเภทสมาขิก
                 DropdownButton(
-                  value: discount,
+                  value: selectDiscount,
                   isExpanded: true,
                   items: memberType
                       .map(
-                        (e) => DropdownMenuItem(
+                        (e) => DropdownMenuItem<double>(
                           value: memberType.indexOf(e).toDouble(),
                           child: Text(
                             e,
@@ -267,19 +288,22 @@ class _CalBillUIState extends State<CalBillUI> {
                       )
                       .toList(),
                   onChanged: (valueParam) {
+                    int index = valueParam!.toInt();
                     setState(() {
-                      switch (valueParam) {
+                      selectDiscount = valueParam;
+                      switch (index) {
                         case 0:
-                          discount = 0;
+                          discount = 0.00;
                           break;
                         case 1:
                           discount = 0.05;
                           break;
                         case 2:
-                          discount = 0.2;
+                          discount = 0.20;
                           break;
+                        default:
+                          discount = 0.00;
                       }
-                      discount = valueParam!;
                     });
                   },
                 ),
@@ -302,36 +326,43 @@ class _CalBillUIState extends State<CalBillUI> {
                           onPressed: () {
                             //validate
                             if (imgFile == null) {
+                              showWarningDialog(context,
+                                  'กรุณาใส่รูปโปรไฟล์ก่อนดำเนินการต่อ');
+                              return;
                             } else if (adultCheck == true &&
-                                    adultCtrl.text == '1' ||
+                                    adultCtrl.text == '0' ||
                                 adultCtrl.text.isEmpty) {
+                              showWarningDialog(
+                                  context, 'ป้อนจำนวนผู้ใหญ่ไม่ครบ');
+                              return;
                             } else if (childCheck == true &&
-                                    childCtrl.text == '1' ||
+                                    childCtrl.text == '0' ||
                                 childCtrl.text.isEmpty) {
-                            } else {
-                              int adult = int.parse(adultCtrl.text);
-                              int child = int.parse(childCtrl.text);
-                              int coke = int.parse(cokeCtrl.text);
-                              int pure = int.parse(pureCtrl.text);
-                              double payWaterBuffet =
-                                  waterCheck == 1 ? 25.0 * (adult + child) : 0;
-                              double payTotal = (payWaterBuffet +
-                                  (adult * 299) +
-                                  (child * 69) +
-                                  (coke * 20) +
-                                  (pure * 15));
-                              // สิ่งที่ต้องจ่ายทั้งหมด
-                              payTotal = payTotal - (payTotal * discount);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ShowBillUI(
-                                    payTotal: payTotal,
-                                    imgFile: imgFile,
-                                  ),
-                                ),
-                              );
+                              showWarningDialog(context, 'ป้อนจำนวนเด็กไม่ครบ');
+                              return;
                             }
+                            int adult = int.parse(adultCtrl.text);
+                            int child = int.parse(childCtrl.text);
+                            int coke = int.parse(cokeCtrl.text);
+                            int pure = int.parse(pureCtrl.text);
+                            double payWaterBuffet =
+                                drinkCheck == 1 ? 25.0 * (adult + child) : 0;
+                            double payTotal = (payWaterBuffet +
+                                (adult * 299) +
+                                (child * 69) +
+                                (coke * 20) +
+                                (pure * 15));
+                            // สิ่งที่ต้องจ่ายทั้งหมด
+                            payTotal = payTotal - (payTotal * discount);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ShowBillUI(
+                                  payTotal: payTotal,
+                                  imgFile: imgFile,
+                                ),
+                              ),
+                            );
                           }),
                     ),
                     SizedBox(width: 10),
@@ -347,7 +378,21 @@ class _CalBillUIState extends State<CalBillUI> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          setState(() {
+                            // Reset all values to their default states
+                            imgFile = null;
+                            adultCheck = false;
+                            childCheck = false;
+                            drinkCheck = 1;
+                            adultCtrl.text = '0';
+                            childCtrl.text = '0';
+                            cokeCtrl.text = '0';
+                            pureCtrl.text = '0';
+                            discount = 0.0;
+                            selectDiscount = 0.0;
+                          });
+                        },
                       ),
                     ),
                   ],
